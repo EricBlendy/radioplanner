@@ -7,7 +7,6 @@
     
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/fitty/2.3.6/fitty.min.js"></script>
 
     <style>
         @font-face {
@@ -44,40 +43,38 @@
         }
 
         .segment { 
-            margin-bottom: 8px; flex-grow: 1; display: flex; flex-direction: column; overflow: hidden;
+            margin-bottom: 8px; flex-grow: 1; display: flex; flex-direction: column;
         }
 
         .time-label { font-size: 0.85rem; color: #888; margin-bottom: 2px; font-weight: bold; }
 
-        /* The Scalable Container */
-        .fit-container {
+        /* FIXED SIZE BOX: Text wraps and shrinks inside this */
+        .editable-slot {
             width: 100%;
             flex-grow: 1;
             background: #222;
             border: 1px solid #444;
             border-radius: 6px;
-            display: flex;
-            align-items: center; /* Centers text vertically */
-            justify-content: center;
-            overflow: hidden;
-            padding: 5px;
-            cursor: text;
-        }
-
-        /* The actual editable text area */
-        .fit-text {
-            width: 100%;
-            white-space: nowrap;
-            display: inline-block;
             color: white;
+            padding: 8px;
+            font-size: 1.2rem; /* Starting size */
+            font-weight: bold;
             text-align: center;
             outline: none;
-            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            overflow: hidden; /* Ensures no scrollbars appear */
+            line-height: 1.2;
+            transition: font-size 0.1s ease;
         }
 
-        .fit-container:focus-within {
+        .editable-slot:focus {
             border-color: #ea2776;
             box-shadow: 0 0 8px rgba(234, 39, 118, 0.4);
+            background: #2a2a2a;
         }
 
         .bottom-row { 
@@ -97,7 +94,6 @@
             border: 1px solid #444; border-radius: 6px; padding: 10px; 
             resize: none; font-size: 1.1rem; font-family: inherit;
         }
-        textarea:focus { outline: none; border-color: #ea2776; }
     </style>
 </head>
 <body>
@@ -109,11 +105,11 @@
     <div class="bottom-row">
         <div class="wide-box">
             <label>POST SHOW NOTES</label>
-            <textarea id="post_show" oninput="updateDB('post_show', this.value)"></textarea>
+            <textarea id="post_show"></textarea>
         </div>
         <div class="wide-box">
             <label>FUTURE IDEAS</label>
-            <textarea id="ideas" oninput="updateDB('ideas', this.value)"></textarea>
+            <textarea id="ideas"></textarea>
         </div>
     </div>
 
@@ -129,7 +125,6 @@
         const grid = document.getElementById('grid-container');
         const startHour = 6;
 
-        // Create Grid
         for (let h = 0; h < 4; h++) {
             const hour = startHour + h;
             const col = document.createElement('div');
@@ -144,40 +139,43 @@
                 seg.className = 'segment';
                 seg.innerHTML = `
                     <div class="time-label">${hour}:${mins}</div>
-                    <div class="fit-container" onclick="this.querySelector('.fit-text').focus()">
-                        <span class="fit-text" id="${slotId}" contenteditable="true"></span>
-                    </div>`;
+                    <div id="${slotId}" class="editable-slot" contenteditable="true" oninput="handleInput(this)"></div>`;
                 col.appendChild(seg);
             }
             grid.appendChild(col);
         }
 
-        // Initialize Fitty on all text slots
-        const fitties = fitty('.fit-text', { minSize: 12, maxSize: 40 });
-
-        // WRITE: Capture changes from the contenteditable spans
-        document.addEventListener('input', (e) => {
-            if (e.target.classList.contains('fit-text') || e.target.tagName === 'TEXTAREA') {
-                const val = e.target.innerText || e.target.value;
-                updateDB(e.target.id, val);
+        // AUTO-SCALE TEXT FUNCTION
+        function scaleText(el) {
+            const length = el.innerText.length;
+            if (length > 30) {
+                el.style.fontSize = "0.85rem";
+            } else if (length > 15) {
+                el.style.fontSize = "1rem";
+            } else {
+                el.style.fontSize = "1.2rem";
             }
-        });
-
-        function updateDB(id, val) {
-            db.ref('planner/' + id).set(val);
         }
 
-        // READ: Sync live
+        function handleInput(el) {
+            scaleText(el);
+            db.ref('planner/' + el.id).set(el.innerText);
+        }
+
+        // Listeners for bottom boxes
+        document.getElementById('post_show').oninput = (e) => db.ref('planner/post_show').set(e.target.value);
+        document.getElementById('ideas').oninput = (e) => db.ref('planner/ideas').set(e.target.value);
+
+        // SYNC FROM DATABASE
         db.ref('planner').on('value', (snapshot) => {
             const data = snapshot.val();
             if (data) {
                 for (let key in data) {
                     const el = document.getElementById(key);
                     if (el && document.activeElement !== el) {
-                        if (el.tagName === 'SPAN') {
+                        if (el.tagName === 'DIV') {
                             el.innerText = data[key];
-                            // Re-run fitty to adjust scale after text change
-                            fitties.forEach(f => f.fit());
+                            scaleText(el); // Scale on load
                         } else {
                             el.value = data[key];
                         }
