@@ -51,7 +51,6 @@
             cursor: pointer; display: inline-block; width: fit-content;
             transition: color 0.2s; user-select: none;
         }
-        .time-label:hover { filter: brightness(1.5); }
 
         .editable-slot {
             width: 100%;
@@ -66,12 +65,13 @@
             text-align: center;
             outline: none;
             display: flex;
+            flex-direction: column; /* Changed to column to handle multi-line better */
             align-items: center;
             justify-content: center;
             word-wrap: break-word;
             overflow-wrap: break-word;
             overflow: hidden; 
-            line-height: 1.1;
+            line-height: 1.2;
             transition: background 0.3s, border-color 0.3s;
         }
 
@@ -154,10 +154,19 @@
                 seg.className = 'segment';
                 seg.innerHTML = `
                     <div id="time_${slotId}" class="time-label" onclick="cycleColor('${slotId}')">${hour}:${mins}</div>
-                    <div id="${slotId}" class="editable-slot" contenteditable="true" oninput="handleInput(this)"></div>`;
+                    <div id="${slotId}" class="editable-slot" contenteditable="true" oninput="handleInput(this)" onkeydown="handleEnter(event)"></div>`;
                 col.appendChild(seg);
             }
             grid.appendChild(col);
+        }
+
+        // FORCE CLEAN LINE BREAKS
+        function handleEnter(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                // Insert a plain line break
+                document.execCommand('insertLineBreak');
+            }
         }
 
         function cycleColor(slotId) {
@@ -180,7 +189,6 @@
 
         function handleInput(el) {
             scaleText(el);
-            // Using innerHTML fixes the Enter/New Line visual bug
             db.ref('planner/' + el.id).set(el.innerHTML);
         }
 
