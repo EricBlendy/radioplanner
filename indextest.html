@@ -90,37 +90,16 @@
         }
 
         .editable-slot {
-            width: 100%;
-            flex-grow: 1;
-            background: #222;
-            border: 1px solid #444;
-            border-radius: 6px;
-            color: white;
-            padding: 5px 10px;
-            font-size: 1.4rem;
-            font-weight: bold;
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            line-height: 1.1; 
-            min-height: 60px;
-            word-wrap: break-word;
-            overflow-wrap: anywhere; 
-            word-break: normal; 
-            overflow: hidden; 
-            position: relative;
+            width: 100%; flex-grow: 1; background: #222; border: 1px solid #444; border-radius: 6px;
+            color: white; padding: 5px 10px; font-size: 1.4rem; font-weight: bold;
+            text-align: center; display: flex; flex-direction: column; justify-content: center;
+            align-items: center; line-height: 1.1; min-height: 60px;
+            word-wrap: break-word; overflow-wrap: anywhere; word-break: normal; 
+            overflow: hidden; position: relative;
         }
 
-        .editable-slot:empty:before {
-            content: "\feff"; 
-            display: inline-block;
-            width: 0;
-            pointer-events: none;
-        }
+        .editable-slot:empty:before { content: "\feff"; display: inline-block; width: 0; pointer-events: none; }
 
-        /* Color Coding */
         .state-red { background: #661111 !important; }
         .state-green { background: #114411 !important; }
         .state-blue { background: #112266 !important; }
@@ -137,58 +116,26 @@
 
         /* --- POP-UP MENU STYLES --- */
         #menu-overlay {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(10, 10, 10, 0.9);
-            backdrop-filter: blur(8px);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(10, 10, 10, 0.9); backdrop-filter: blur(8px);
+            z-index: 1000; justify-content: center; align-items: center;
         }
 
         .menu-card {
-            background: #161616;
-            border: 2px solid #ea2776;
-            border-radius: 15px;
-            padding: 30px;
-            width: 350px;
-            text-align: center;
-            box-shadow: 0 0 30px rgba(234, 39, 118, 0.3);
+            background: #161616; border: 2px solid #ea2776; border-radius: 15px;
+            padding: 30px; width: 350px; text-align: center; box-shadow: 0 0 30px rgba(234, 39, 118, 0.3);
         }
 
-        .menu-card h2 {
-            color: #ea2776;
-            font-family: 'Frankfurter', sans-serif;
-            margin-bottom: 25px;
-            text-transform: uppercase;
-        }
+        .menu-card h2 { color: #ea2776; font-family: 'Frankfurter', sans-serif; margin-bottom: 25px; text-transform: uppercase; }
 
         .menu-btn {
-            display: block;
-            width: 100%;
-            padding: 12px;
-            margin: 10px 0;
-            background: #222;
-            color: white;
-            border: 1px solid #444;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 1.1rem;
-            font-weight: bold;
-            transition: all 0.2s;
+            display: block; width: 100%; padding: 12px; margin: 10px 0;
+            background: #222; color: white; border: 1px solid #444; border-radius: 8px;
+            cursor: pointer; font-size: 1.1rem; font-weight: bold; transition: all 0.2s;
         }
 
-        .menu-btn:hover {
-            background: #ea2776;
-            border-color: #ea2776;
-        }
-
-        .back-btn {
-            background: #444;
-            margin-top: 20px;
-        }
-
+        .menu-btn:hover { background: #ea2776; border-color: #ea2776; }
+        .back-btn { background: #333; margin-top: 20px; border-style: dashed; }
         .hidden { display: none; }
     </style>
 </head>
@@ -220,13 +167,13 @@
             <button class="menu-btn" onclick="openSubMenu('Save / Load')">Save / Load</button>
             <button class="menu-btn" onclick="openSubMenu('Options')">Options</button>
             <button class="menu-btn" onclick="openSubMenu('About')">About</button>
-            <p style="color:#666; font-size: 0.8rem; margin-top: 15px;">Press ESC to Close</p>
+            <button class="menu-btn back-btn" onclick="toggleMenu(false)">Back to Whiteboard</button>
         </div>
 
         <div id="sub-menu" class="menu-card hidden">
             <h2 id="sub-title">Menu</h2>
             <p style="color: #888; margin-bottom: 30px;">This menu is currently a placeholder.</p>
-            <button class="menu-btn back-btn" onclick="closeSubMenu()">Back</button>
+            <button class="menu-btn back-btn" onclick="closeSubMenu()">← Back</button>
         </div>
     </div>
 
@@ -241,7 +188,6 @@
         const grid = document.getElementById('grid-container');
         const startHour = 6;
 
-        // --- GRID GENERATION ---
         for (let h = 0; h < 4; h++) {
             const hour = startHour + h;
             const col = document.createElement('div');
@@ -258,7 +204,6 @@
             grid.appendChild(col);
         }
 
-        // --- CORE FUNCTIONS ---
         function handleEnter(e) { if (e.key === 'Enter') { e.preventDefault(); document.execCommand('insertLineBreak'); } }
         
         function cycleColor(slotId) { 
@@ -311,7 +256,6 @@
 
         function clearWhiteboard() {
             if(confirm("Are you sure? This clears the main whiteboard slots and colors. Post-show and Future Ideas will remain.")) {
-                // Clear all 24 slots and colors in Firebase
                 for (let h = 0; h < 4; h++) {
                     for (let m = 0; m < 6; m++) {
                         const id = `slot_${h}_${m}`;
@@ -332,14 +276,12 @@
             doc.text("Generated: " + new Date().toLocaleString(), 10, 28);
             
             let y = 40;
-            // Capture only the 10-min slots
             document.querySelectorAll('.hour-column').forEach(col => {
                 const header = col.querySelector('.hour-header').innerText;
                 doc.setFontSize(14);
                 doc.setTextColor(234, 39, 118);
                 doc.text(header, 10, y);
                 y += 7;
-                
                 col.querySelectorAll('.segment').forEach(seg => {
                     const time = seg.querySelector('.time-label').innerText;
                     const content = seg.querySelector('.editable-slot').innerText;
@@ -351,7 +293,6 @@
                 y += 5;
                 if(y > 270) { doc.addPage(); y = 20; }
             });
-
             doc.save(`KIIS_ShowLog_${new Date().toLocaleDateString()}.pdf`);
             toggleMenu(false);
         }
