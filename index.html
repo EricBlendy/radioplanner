@@ -43,12 +43,12 @@
         }
 
         .segment { 
-            margin-bottom: 8px; flex-grow: 1; display: flex; flex-direction: column;
+            margin-bottom: 8px; flex-grow: 1; display: flex; flex-direction: column; height: 100%;
         }
 
         .time-label { font-size: 0.85rem; color: #888; margin-bottom: 2px; font-weight: bold; }
 
-        /* FIXED SIZE BOX: Text wraps and shrinks inside this */
+        /* FIXED SIZE BOX */
         .editable-slot {
             width: 100%;
             flex-grow: 1;
@@ -56,8 +56,8 @@
             border: 1px solid #444;
             border-radius: 6px;
             color: white;
-            padding: 8px;
-            font-size: 1.2rem; /* Starting size */
+            padding: 5px 10px;
+            font-size: 1.4rem; /* Standard readable size */
             font-weight: bold;
             text-align: center;
             outline: none;
@@ -66,9 +66,8 @@
             justify-content: center;
             word-wrap: break-word;
             overflow-wrap: break-word;
-            overflow: hidden; /* Ensures no scrollbars appear */
-            line-height: 1.2;
-            transition: font-size 0.1s ease;
+            overflow: hidden; 
+            line-height: 1.1;
         }
 
         .editable-slot:focus {
@@ -145,15 +144,18 @@
             grid.appendChild(col);
         }
 
-        // AUTO-SCALE TEXT FUNCTION
+        // IMPROVED DYNAMIC SCALING
         function scaleText(el) {
-            const length = el.innerText.length;
-            if (length > 30) {
-                el.style.fontSize = "0.85rem";
-            } else if (length > 15) {
-                el.style.fontSize = "1rem";
-            } else {
-                el.style.fontSize = "1.2rem";
+            // Reset to default size first to measure accurately
+            el.style.fontSize = "1.4rem";
+            
+            let currentSize = 1.4;
+            const minSize = 0.7; // Won't get smaller than this
+            
+            // If the content is taller than the box, shrink it step by step
+            while (el.scrollHeight > el.clientHeight && currentSize > minSize) {
+                currentSize -= 0.05;
+                el.style.fontSize = currentSize + "rem";
             }
         }
 
@@ -162,11 +164,9 @@
             db.ref('planner/' + el.id).set(el.innerText);
         }
 
-        // Listeners for bottom boxes
         document.getElementById('post_show').oninput = (e) => db.ref('planner/post_show').set(e.target.value);
         document.getElementById('ideas').oninput = (e) => db.ref('planner/ideas').set(e.target.value);
 
-        // SYNC FROM DATABASE
         db.ref('planner').on('value', (snapshot) => {
             const data = snapshot.val();
             if (data) {
@@ -175,7 +175,7 @@
                     if (el && document.activeElement !== el) {
                         if (el.tagName === 'DIV') {
                             el.innerText = data[key];
-                            scaleText(el); // Scale on load
+                            scaleText(el);
                         } else {
                             el.value = data[key];
                         }
