@@ -100,7 +100,6 @@
 
         .editable-slot:empty:before { content: "\feff"; display: inline-block; width: 0; pointer-events: none; }
 
-        /* Color Coding Styles */
         .state-red { background: #661111 !important; }
         .state-green { background: #114411 !important; }
         .state-blue { background: #112266 !important; }
@@ -127,7 +126,13 @@
             padding: 30px; width: 350px; text-align: center; box-shadow: 0 0 30px rgba(234, 39, 118, 0.3);
         }
 
-        .menu-card h2 { color: #ea2776; font-family: 'Frankfurter', sans-serif; margin-bottom: 25px; text-transform: uppercase; }
+        .menu-card h2 { 
+            color: #ea2776; 
+            font-family: 'Segoe UI', Arial, sans-serif; /* Changed from Frankfurter */
+            margin-bottom: 25px; 
+            text-transform: uppercase;
+            font-weight: 800;
+        }
 
         .menu-btn {
             display: block; width: 100%; padding: 12px; margin: 10px 0;
@@ -162,7 +167,7 @@
 
     <div id="menu-overlay">
         <div id="main-menu" class="menu-card">
-            <h2>Whiteboard Menu</h2>
+            <h2>Menu</h2>
             <button class="menu-btn" onclick="clearWhiteboard()">Clear</button>
             <button class="menu-btn" onclick="saveAsPDF()">Save as PDF</button>
             <button class="menu-btn" onclick="openSubMenu('Save / Load')">Save / Load</button>
@@ -189,7 +194,6 @@
         const grid = document.getElementById('grid-container');
         const startHour = 6;
 
-        // Generate Grid
         for (let h = 0; h < 4; h++) {
             const hour = startHour + h;
             const col = document.createElement('div');
@@ -230,26 +234,21 @@
         function handleInput(el) { scaleText(el); db.ref('planner/' + el.id).set(el.innerHTML); }
         function handleTextArea(el) { db.ref('planner/' + el.id).set(el.value); }
 
-        // --- MENU LOGIC ---
-        const overlay = document.getElementById('menu-overlay');
-        const mainMenu = document.getElementById('main-menu');
-        const subMenu = document.getElementById('sub-menu');
-        const subTitle = document.getElementById('sub-title');
-
         function toggleMenu(show) {
-            overlay.style.display = show ? 'flex' : 'none';
+            document.getElementById('menu-overlay').style.display = show ? 'flex' : 'none';
             if(show) closeSubMenu();
         }
 
         function openSubMenu(title) {
-            mainMenu.classList.add('hidden');
-            subMenu.classList.remove('hidden');
-            subTitle.innerText = title;
+            document.getElementById('main-menu').classList.add('hidden');
+            const sub = document.getElementById('sub-menu');
+            sub.classList.remove('hidden');
+            document.getElementById('sub-title').innerText = title;
         }
 
         function closeSubMenu() {
-            subMenu.classList.add('hidden');
-            mainMenu.classList.remove('hidden');
+            document.getElementById('sub-menu').classList.add('hidden');
+            document.getElementById('main-menu').classList.remove('hidden');
         }
 
         window.addEventListener('keydown', (e) => {
@@ -310,7 +309,7 @@
                         doc.setFont("helvetica", "normal");
                         const splitContent = doc.splitTextToSize(content, maxLineWidth - 20);
                         const estimatedHeight = splitContent.length * 5;
-                        if (y + estimatedHeight > 280) { doc.addPage(); y = 20; doc.text(`${time}: (cont)`, margin, y); y += 5; }
+                        if (y + estimatedHeight > 280) { doc.addPage(); y = 20; }
 
                         doc.text(splitContent, margin + 15, y);
                         y += (splitContent.length * 5) + 3; 
@@ -328,7 +327,6 @@
             toggleMenu(false);
         }
 
-        // --- FIREBASE SYNC ---
         db.ref('planner').on('value', (snapshot) => { 
             const data = snapshot.val(); 
             if (data) { 
