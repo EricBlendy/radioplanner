@@ -100,7 +100,6 @@
 
         .editable-slot:empty:before { content: "\feff"; display: inline-block; width: 0; pointer-events: none; }
 
-        /* Color Coding Styles */
         .state-red { background: #661111 !important; }
         .state-green { background: #114411 !important; }
         .state-blue { background: #112266 !important; }
@@ -124,10 +123,11 @@
 
         .menu-card {
             background: #161616; border: 2px solid #ea2776; border-radius: 15px;
-            padding: 30px; width: 350px; text-align: center; box-shadow: 0 0 30px rgba(234, 39, 118, 0.3);
+            padding: 30px; width: 450px; text-align: center; box-shadow: 0 0 30px rgba(234, 39, 118, 0.3);
+            max-height: 90vh; display: flex; flex-direction: column;
         }
 
-        .menu-card h2 { color: #ea2776; font-family: 'Frankfurter', sans-serif; margin-bottom: 25px; text-transform: uppercase; }
+        .menu-card h2 { color: #ea2776; font-family: 'Frankfurter', sans-serif; margin-bottom: 20px; text-transform: uppercase; }
 
         .menu-btn {
             display: block; width: 100%; padding: 12px; margin: 10px 0;
@@ -137,6 +137,29 @@
 
         .menu-btn:hover { background: #ea2776; border-color: #ea2776; }
         .back-btn { background: #333; margin-top: 20px; border-style: dashed; }
+        
+        /* --- SAVE LOAD SPECIFIC --- */
+        #save-list { 
+            flex-grow: 1; overflow-y: auto; margin: 15px 0; border: 1px solid #333; 
+            border-radius: 8px; background: #0d0d0d; padding: 10px;
+        }
+        .save-item { 
+            display: flex; justify-content: space-between; align-items: center; 
+            padding: 10px; border-bottom: 1px solid #222; text-align: left;
+        }
+        .save-item:last-child { border-bottom: none; }
+        .save-info { flex-grow: 1; }
+        .save-name { font-weight: bold; color: #ea2776; font-size: 1rem; }
+        .save-date { font-size: 0.75rem; color: #666; }
+        .save-actions { display: flex; gap: 5px; }
+        .mini-btn { padding: 5px 10px; font-size: 0.8rem; border-radius: 4px; cursor: pointer; border: none; font-weight: bold; }
+        .btn-load { background: #114411; color: white; }
+        .btn-del { background: #441111; color: white; }
+        .save-input { 
+            width: 100%; padding: 12px; background: #222; border: 1px solid #444; 
+            color: white; border-radius: 8px; margin-bottom: 10px; text-align: center; font-size: 1.1rem;
+        }
+
         .hidden { display: none; }
     </style>
 </head>
@@ -163,17 +186,28 @@
     <div id="menu-overlay">
         <div id="main-menu" class="menu-card">
             <h2>Whiteboard Menu</h2>
-            <button class="menu-btn" onclick="clearWhiteboard()">Clear</button>
+            <button class="menu-btn" onclick="clearWhiteboard()">Clear Current</button>
             <button class="menu-btn" onclick="saveAsPDF()">Save as PDF</button>
-            <button class="menu-btn" onclick="openSubMenu('Save / Load')">Save / Load</button>
+            <button class="menu-btn" onclick="openSubMenu('Save / Load')">Save / Load States</button>
             <button class="menu-btn" onclick="openSubMenu('Options')">Options</button>
             <button class="menu-btn" onclick="openSubMenu('About')">About</button>
             <button class="menu-btn back-btn" onclick="toggleMenu(false)">Back to Whiteboard</button>
         </div>
 
-        <div id="sub-menu" class="menu-card hidden">
+        <div id="save-load-menu" class="menu-card hidden">
+            <h2>Save / Load</h2>
+            <input type="text" id="saveNameInput" class="save-input" placeholder="Enter State Name...">
+            <button class="menu-btn" style="background: #ea2776;" onclick="saveCurrentState()">Save Current State</button>
+            
+            <div id="save-list">
+                </div>
+
+            <button class="menu-btn back-btn" onclick="closeSubMenu()">← Back</button>
+        </div>
+
+        <div id="generic-sub-menu" class="menu-card hidden">
             <h2 id="sub-title">Menu</h2>
-            <p style="color: #888; margin-bottom: 30px;">This menu is currently a placeholder.</p>
+            <p style="color: #888; margin-bottom: 30px;">This section is coming soon.</p>
             <button class="menu-btn back-btn" onclick="closeSubMenu()">← Back</button>
         </div>
     </div>
@@ -189,7 +223,7 @@
         const grid = document.getElementById('grid-container');
         const startHour = 6;
 
-        // Generate Grid
+        // --- GRID GENERATION ---
         for (let h = 0; h < 4; h++) {
             const hour = startHour + h;
             const col = document.createElement('div');
@@ -233,8 +267,8 @@
         // --- MENU LOGIC ---
         const overlay = document.getElementById('menu-overlay');
         const mainMenu = document.getElementById('main-menu');
-        const subMenu = document.getElementById('sub-menu');
-        const subTitle = document.getElementById('sub-title');
+        const saveLoadMenu = document.getElementById('save-load-menu');
+        const genericSub = document.getElementById('generic-sub-menu');
 
         function toggleMenu(show) {
             overlay.style.display = show ? 'flex' : 'none';
@@ -243,12 +277,18 @@
 
         function openSubMenu(title) {
             mainMenu.classList.add('hidden');
-            subMenu.classList.remove('hidden');
-            subTitle.innerText = title;
+            if(title === 'Save / Load') {
+                saveLoadMenu.classList.remove('hidden');
+                loadSaveList();
+            } else {
+                genericSub.classList.remove('hidden');
+                document.getElementById('sub-title').innerText = title;
+            }
         }
 
         function closeSubMenu() {
-            subMenu.classList.add('hidden');
+            saveLoadMenu.classList.add('hidden');
+            genericSub.classList.add('hidden');
             mainMenu.classList.remove('hidden');
         }
 
@@ -256,6 +296,82 @@
             if (e.key === "Escape") toggleMenu(false);
         });
 
+        // --- SAVE / LOAD LOGIC ---
+        function saveCurrentState() {
+            const name = document.getElementById('saveNameInput').value.trim();
+            if(!name) { alert("Please enter a name for this state."); return; }
+
+            // Capture the whole board
+            Promise.all([
+                db.ref('planner').once('value'),
+                db.ref('colors').once('value')
+            ]).then((snapshots) => {
+                const stateData = {
+                    name: name,
+                    timestamp: Date.now(),
+                    planner: snapshots[0].val(),
+                    colors: snapshots[1].val()
+                };
+                
+                db.ref('saves').push(stateData).then(() => {
+                    document.getElementById('saveNameInput').value = "";
+                    loadSaveList();
+                    alert("State Saved!");
+                });
+            });
+        }
+
+        function loadSaveList() {
+            const listDiv = document.getElementById('save-list');
+            listDiv.innerHTML = "Loading saves...";
+            
+            db.ref('saves').orderByChild('timestamp').once('value', (snapshot) => {
+                listDiv.innerHTML = "";
+                const data = snapshot.val();
+                if(!data) { listDiv.innerHTML = "<p style='color:#444'>No saved states found.</p>"; return; }
+
+                // Reverse to show newest first
+                Object.keys(data).reverse().forEach(key => {
+                    const save = data[key];
+                    const date = new Date(save.timestamp).toLocaleString();
+                    const item = document.createElement('div');
+                    item.className = 'save-item';
+                    item.innerHTML = `
+                        <div class="save-info">
+                            <div class="save-name">${save.name}</div>
+                            <div class="save-date">${date}</div>
+                        </div>
+                        <div class="save-actions">
+                            <button class="mini-btn btn-load" onclick="loadState('${key}')">Load</button>
+                            <button class="mini-btn btn-del" onclick="deleteSave('${key}')">Delete</button>
+                        </div>
+                    `;
+                    listDiv.appendChild(item);
+                });
+            });
+        }
+
+        function loadState(key) {
+            if(!confirm("Loading this will overwrite the current live whiteboard. Continue?")) return;
+            
+            db.ref('saves/' + key).once('value', (snapshot) => {
+                const state = snapshot.val();
+                if(state) {
+                    // Update main database with the saved state
+                    db.ref('planner').set(state.planner);
+                    db.ref('colors').set(state.colors);
+                    toggleMenu(false);
+                }
+            });
+        }
+
+        function deleteSave(key) {
+            if(confirm("Are you sure you want to permanently delete this saved state?")) {
+                db.ref('saves/' + key).remove().then(() => loadSaveList());
+            }
+        }
+
+        // --- CLEAR & PDF LOGIC ---
         function clearWhiteboard() {
             if(confirm("Clear main whiteboard and colors? (Post-show and Future Ideas will remain safe)")) {
                 for (let h = 0; h < 4; h++) {
@@ -290,57 +406,42 @@
             document.querySelectorAll('.hour-column').forEach(col => {
                 const header = col.querySelector('.hour-header').innerText;
                 if (y > 260) { doc.addPage(); y = 20; }
-
-                doc.setFontSize(14);
-                doc.setFont("helvetica", "bold");
-                doc.setTextColor(234, 39, 118);
-                doc.text(header, margin, y);
-                y += 8;
+                doc.setFontSize(14); doc.setFont("helvetica", "bold"); doc.setTextColor(234, 39, 118);
+                doc.text(header, margin, y); y += 8;
                 
                 col.querySelectorAll('.segment').forEach(seg => {
                     const time = seg.querySelector('.time-label').innerText;
                     const content = seg.querySelector('.editable-slot').innerText.trim();
-                    
-                    doc.setFontSize(10);
-                    doc.setFont("helvetica", "bold");
-                    doc.setTextColor(0, 0, 0);
+                    doc.setFontSize(10); doc.setFont("helvetica", "bold"); doc.setTextColor(0, 0, 0);
                     doc.text(`${time}:`, margin, y);
                     
                     if (content !== "") {
                         doc.setFont("helvetica", "normal");
                         const splitContent = doc.splitTextToSize(content, maxLineWidth - 20);
                         const estimatedHeight = splitContent.length * 5;
-                        if (y + estimatedHeight > 280) { doc.addPage(); y = 20; doc.text(`${time}: (cont)`, margin, y); y += 5; }
-
+                        if (y + estimatedHeight > 280) { doc.addPage(); y = 20; }
                         doc.text(splitContent, margin + 15, y);
                         y += (splitContent.length * 5) + 3; 
                     } else {
-                        doc.setFont("helvetica", "normal");
-                        doc.setTextColor(180, 180, 180);
-                        doc.text("--", margin + 15, y);
-                        y += 6;
+                        doc.setFont("helvetica", "normal"); doc.setTextColor(180, 180, 180);
+                        doc.text("--", margin + 15, y); y += 6;
                     }
                 });
                 y += 10;
             });
-
             doc.save(`KIIS_ShowLog_${new Date().toLocaleDateString().replace(/\//g, '-')}.pdf`);
             toggleMenu(false);
         }
 
-        // --- FIREBASE SYNC ---
+        // --- FIREBASE LIVE SYNC ---
         db.ref('planner').on('value', (snapshot) => { 
             const data = snapshot.val(); 
             if (data) { 
                 for (let key in data) { 
                     const el = document.getElementById(key); 
                     if (el && document.activeElement !== el) { 
-                        if (el.tagName === 'DIV') { 
-                            el.innerHTML = data[key]; 
-                            scaleText(el); 
-                        } else { 
-                            el.value = data[key]; 
-                        } 
+                        if (el.tagName === 'DIV') { el.innerHTML = data[key]; scaleText(el); } 
+                        else { el.value = data[key]; } 
                     } 
                 } 
             } 
