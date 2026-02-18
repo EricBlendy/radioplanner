@@ -86,7 +86,7 @@
             box-shadow: 0 0 12px rgba(234, 39, 118, 0.5) !important; 
         }
 
-        /* THE FINAL VERTICAL ALIGNMENT FIX */
+        /* THE STABLE CENTERED SLOT */
         .editable-slot {
             width: 100%;
             flex-grow: 1;
@@ -94,7 +94,7 @@
             border: 1px solid #444;
             border-radius: 6px;
             color: white;
-            padding: 10px;
+            padding: 5px 10px;
             font-size: 1.4rem;
             font-weight: bold;
             text-align: center;
@@ -104,18 +104,23 @@
             justify-content: center;
             align-items: center;
             
-            line-height: 1; /* Stops cursor from stretching */
+            line-height: 1.2;
             min-height: 60px;
             word-wrap: break-word;
             overflow-wrap: break-word;
             word-break: break-all;
             overflow: hidden; 
+            position: relative; /* Anchor for the ghost fix */
         }
 
-        /* Forces caretaker into the flex-center position when empty */
+        /* THE JUMP FIX: 
+           Creates a zero-width "anchor" that is perfectly centered. 
+           The browser puts the cursor on this anchor until you start typing. */
         .editable-slot:empty:before {
             content: "\feff"; 
-            display: block;
+            display: inline-block;
+            width: 0;
+            pointer-events: none;
         }
 
         /* Color Coding */
