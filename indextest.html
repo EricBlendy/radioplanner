@@ -24,20 +24,22 @@
             display: flex; flex-direction: column; 
             overflow-x: hidden;
             overflow-y: hidden; 
-            position: relative; /* Needed for the logo positioning */
+            position: relative; 
         }
 
         /* LOGO STYLING */
         .station-logo {
             position: absolute;
             top: 20px;
-            right: 20px;
-            height: 60px; /* Adjust size as needed */
+            height: 60px; 
             width: auto;
             object-fit: contain;
         }
 
-        /* HIDE LOGO ON MOBILE / SMALL WINDOWS */
+        .logo-left { left: 20px; }
+        .logo-right { right: 20px; }
+
+        /* HIDE LOGOS ON SMALLER WINDOWS */
         @media (max-width: 1200px) {
             .station-logo { display: none; }
         }
@@ -101,6 +103,7 @@
             min-height: 60px;
         }
 
+        /* Color Coding */
         .state-red { background: #661111 !important; }
         .state-green { background: #114411 !important; }
         .state-blue { background: #112266 !important; }
@@ -120,7 +123,8 @@
 </head>
 <body>
 
-    <img src="logo.png" alt="KIIS Logo" class="station-logo">
+    <img src="logo.png" alt="KIIS Logo" class="station-logo logo-left">
+    <img src="logo.png" alt="KIIS Logo" class="station-logo logo-right">
 
     <h1>KIIS 973 - Robin, Kip & Corey</h1>
     
