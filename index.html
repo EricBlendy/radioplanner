@@ -9,11 +9,11 @@
     <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
 
     <style>
-        /* Font declaration - Ensure file is named exactly this in GitHub */
+        /* Register Custom Font */
         @font-face {
             font-family: 'Frankfurter';
             src: url('frankfurter-medium.ttf') format('truetype');
-            font-display: swap; /* Page shows even if font fails */
+            font-display: swap; 
         }
 
         * { box-sizing: border-box; }
@@ -32,11 +32,12 @@
 
         h1 { 
             text-align: center; 
-            color: #00d4ff; 
+            color: #ea2776; /* KIIS PINK */
             font-family: 'Frankfurter', sans-serif;
             margin: 10px 0 20px 0; 
             font-size: 3.5rem; 
             text-transform: uppercase;
+            text-shadow: 0 0 10px rgba(234, 39, 118, 0.2);
         }
         
         .schedule-grid { 
@@ -60,10 +61,11 @@
         .hour-header { 
             text-align: center; 
             font-size: 1.6rem; 
-            color: #00d4ff; 
-            border-bottom: 3px solid #00d4ff; 
+            color: #ea2776; /* KIIS PINK */
+            border-bottom: 3px solid #ea2776; /* KIIS PINK */
             padding-bottom: 10px; 
             margin-bottom: 15px; 
+            font-weight: bold;
         }
 
         .segment { 
@@ -84,6 +86,13 @@
             background: #222; 
             color: white; 
             font-size: 1.2rem; 
+            transition: all 0.2s;
+        }
+
+        input:focus {
+            outline: none;
+            border-color: #ea2776;
+            box-shadow: 0 0 8px rgba(234, 39, 118, 0.4);
         }
 
         .bottom-row { 
@@ -115,6 +124,12 @@
             padding: 10px; 
             resize: none; 
             font-size: 1.1rem;
+            font-family: inherit;
+        }
+        
+        textarea:focus {
+            outline: none;
+            border-color: #ea2776;
         }
     </style>
 </head>
@@ -122,8 +137,7 @@
 
     <h1>KIIS 973 - Robin, Kip & Corey</h1>
     
-    <div id="grid-container" class="schedule-grid">
-        </div>
+    <div id="grid-container" class="schedule-grid"></div>
 
     <div class="bottom-row">
         <div class="wide-box">
@@ -137,17 +151,14 @@
     </div>
 
     <script>
-        // Use your real API key from Firebase settings
         const firebaseConfig = {
             apiKey: "PASTE_YOUR_API_KEY_HERE",
             databaseURL: "https://radioplanner-d6a88-default-rtdb.asia-southeast1.firebasedatabase.app/"
         };
 
-        // Initialize
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        // 1. GENERATE THE GRID
         const grid = document.getElementById('grid-container');
         const startHour = 6;
 
@@ -171,18 +182,15 @@
             grid.appendChild(col);
         }
 
-        // 2. DATABASE FUNCTIONS
         function updateDB(id, val) {
             db.ref('planner/' + id).set(val);
         }
 
-        // 3. LISTEN FOR UPDATES
         db.ref('planner').on('value', (snapshot) => {
             const data = snapshot.val();
             if (data) {
                 for (let key in data) {
                     const el = document.getElementById(key);
-                    // Only update if not currently typing
                     if (el && document.activeElement !== el) {
                         el.value = data[key];
                     }
