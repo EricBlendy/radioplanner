@@ -27,6 +27,7 @@
             position: relative; 
         }
 
+        /* LOGO STYLING */
         .station-logo {
             position: absolute;
             top: 20px;
@@ -86,7 +87,6 @@
             box-shadow: 0 0 12px rgba(234, 39, 118, 0.5) !important; 
         }
 
-        /* THE STABLE CENTERED SLOT */
         .editable-slot {
             width: 100%;
             flex-grow: 1;
@@ -98,29 +98,27 @@
             font-size: 1.4rem;
             font-weight: bold;
             text-align: center;
-
             display: flex;
             flex-direction: column;
-            justify-content: center;
             align-items: center;
+            justify-content: center;
             
-            line-height: 1.2;
-            min-height: 60px;
+            /* Wrapping Fixes */
             word-wrap: break-word;
             overflow-wrap: break-word;
             word-break: break-all;
+            
             overflow: hidden; 
-            position: relative; /* Anchor for the ghost fix */
+            line-height: 1.2;
+            min-height: 60px;
         }
 
-        /* THE JUMP FIX: 
-           Creates a zero-width "anchor" that is perfectly centered. 
-           The browser puts the cursor on this anchor until you start typing. */
+        /* CURSOR ALIGNMENT FIX: 
+           Forces the caret to the center when the box is empty */
         .editable-slot:empty:before {
             content: "\feff"; 
             display: inline-block;
             width: 0;
-            pointer-events: none;
         }
 
         /* Color Coding */
@@ -189,12 +187,13 @@
         function handleEnter(e) { if (e.key === 'Enter') { e.preventDefault(); document.execCommand('insertLineBreak'); } }
         function cycleColor(slotId) { db.ref('colors/' + slotId).once('value', (snapshot) => { let currentColor = snapshot.val() || 'default'; let nextIndex = (colors.indexOf(currentColor) + 1) % colors.length; db.ref('colors/' + slotId).set(colors[nextIndex]); }); }
         
+        // Updated scaleText to handle the empty state character
         function scaleText(el) { 
             el.style.fontSize = "1.4rem"; 
-            if(!el.innerText.trim()) return; 
+            if(!el.innerText.trim()) return; // Don't scale if effectively empty
             let currentSize = 1.4; 
             const minSize = 0.7; 
-            while (el.scrollHeight > el.offsetHeight && currentSize > minSize) { 
+            while (el.scrollHeight > el.clientHeight && currentSize > minSize) { 
                 currentSize -= 0.05; 
                 el.style.fontSize = currentSize + "rem"; 
             } 
