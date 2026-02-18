@@ -3,236 +3,230 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KIIS 973 Digital Whiteboard</title>
-    
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
-
+    <title>Show Runner Whiteboard</title>
     <style>
-        @font-face {
-            font-family: 'Frankfurter';
-            src: url('frankfurter-medium.ttf') format('truetype');
-            font-display: swap; 
+        :root {
+            --bg-color: #f4f4f9;
+            --panel-color: #ffffff;
+            --accent-color: #4a90e2;
+            --text-color: #333;
+            --border-radius: 8px;
+            --shadow: 0 4px 15px rgba(0,0,0,0.1);
         }
 
-        * { box-sizing: border-box; }
-        
-        body { 
-            font-family: 'Segoe UI', Arial, sans-serif; 
-            background: #0a0a0a; color: #f0f0f0; margin: 0; padding: 20px;
-            height: 100vh; /* Locked to viewport height */
-            display: flex; flex-direction: column; 
-            overflow: hidden; /* No scrollbars ever on 1080p */
-            position: relative; 
-        }
-
-        .station-logo {
-            position: absolute;
-            top: 15px;
-            height: 55px; 
-            width: auto;
-            object-fit: contain;
-        }
-        .logo-left { left: 20px; }
-        .logo-right { right: 20px; }
-
-        h1 { 
-            text-align: center; color: #ea2776; font-family: 'Frankfurter', sans-serif;
-            margin: 0 0 15px 0; font-size: 3rem; text-transform: uppercase;
-            line-height: 1;
-        }
-        
-        /* The Container Lock */
-        #grid-container { 
-            display: grid; 
-            grid-template-columns: repeat(4, 1fr); 
-            gap: 12px; 
-            flex: 1; /* Takes up all available space between H1 and Bottom Row */
-            min-height: 0; /* Critical for flex child height limiting */
-        }
-
-        .hour-column { 
-            background: #161616; border: 1px solid #333; border-radius: 12px; 
-            padding: 8px; 
-            display: flex; flex-direction: column;
-            height: 100%; /* Stretches to fit grid container but no further */
+        body {
+            margin: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
             overflow: hidden;
         }
 
-        .hour-header { 
-            text-align: center; font-size: 1.3rem; color: #ea2776; border-bottom: 3px solid #ea2776; 
-            padding-bottom: 5px; margin-bottom: 8px; font-weight: bold;
-        }
-
-        .segment { 
-            flex: 1; /* Each of the 6 segments gets an equal slice of the column */
-            display: flex; flex-direction: column; 
-            min-height: 0; 
-            margin-bottom: 5px;
-        }
-
-        .time-label { 
-            font-size: 0.8rem; color: #888; margin-bottom: 2px; font-weight: bold; 
-            cursor: pointer; user-select: none;
-        }
-
-        .editable-slot, textarea {
-            transition: background 0.3s, border-color 0.3s, box-shadow 0.3s;
-            outline: none;
-        }
-
-        .editable-slot:focus, textarea:focus { 
-            border-color: #ea2776 !important; 
-            box-shadow: 0 0 12px rgba(234, 39, 118, 0.5) !important; 
-        }
-
-        .editable-slot {
-            width: 100%;
-            flex: 1; /* Slot fills the segment space */
-            background: #222;
-            border: 1px solid #444;
-            border-radius: 6px;
-            color: white;
-            padding: 2px 8px;
-            font-size: 1.4rem;
-            font-weight: bold;
-            text-align: center;
+        /* --- Header & Logo --- */
+        #header {
             display: flex;
-            flex-direction: column;
+            align-items: center;
+            padding: 10px 20px;
+            background: var(--panel-color);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        #logo {
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1.5rem;
+            color: var(--accent-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: transform 0.2s;
+        }
+
+        #logo:hover { transform: scale(1.05); }
+
+        /* --- Whiteboard Area --- */
+        #whiteboard {
+            height: calc(100vh - 60px);
+            padding: 20px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .text-box {
+            background: white;
+            border: 2px solid #ddd;
+            border-radius: var(--border-radius);
+            padding: 15px;
+            min-height: 200px;
+        }
+
+        .persistent-section {
+            background: #eef2f7;
+            border: 2px dashed #cbd5e0;
+        }
+
+        /* --- Overlay Menu System --- */
+        #menu-overlay {
+            display: none; /* Hidden by default */
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(244, 244, 249, 0.95);
+            backdrop-filter: blur(5px);
+            z-index: 1000;
             justify-content: center;
             align-items: center;
-            line-height: 1.1;
-            word-wrap: break-word;
-            overflow-wrap: anywhere; 
-            word-break: normal; 
-            overflow: hidden; /* Prevents text from spilling out */
-            position: relative;
         }
 
-        .editable-slot:empty:before {
-            content: "\feff"; 
-            display: inline-block;
-            width: 0;
-            pointer-events: none;
+        .menu-card {
+            background: var(--panel-color);
+            padding: 40px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            width: 300px;
+            text-align: center;
         }
 
-        /* Color Shaders */
-        .state-red { background: #661111 !important; }
-        .state-green { background: #114411 !important; }
-        .state-blue { background: #112266 !important; }
-        .state-yellow { background: #665511 !important; }
-        .label-red { color: #ff5555 !important; }
-        .label-green { color: #55ff55 !important; }
-        .label-blue { color: #5588ff !important; }
-        .label-yellow { color: #ffff55 !important; }
+        .menu-card h2 { margin-top: 0; color: var(--accent-color); }
 
-        .bottom-row { 
-            display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; 
-            margin-top: 15px; 
-            height: 140px; /* Fixed height for the notes area */
+        .menu-btn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            margin: 10px 0;
+            border: 1px solid #ddd;
+            background: white;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.2s;
         }
-        .wide-box { background: #161616; border: 1px solid #444; border-radius: 12px; padding: 10px; display: flex; flex-direction: column; }
-        .wide-box label { color: #ea2776; font-weight: bold; margin-bottom: 5px; font-size: 0.85rem; }
-        textarea { width: 100%; flex-grow: 1; background: #222; color: white; border: 1px solid #444; border-radius: 6px; padding: 8px; resize: none; font-size: 1rem; font-family: inherit; }
+
+        .menu-btn:hover {
+            background: var(--accent-color);
+            color: white;
+            border-color: var(--accent-color);
+        }
+
+        .menu-btn.secondary {
+            background: #6c757d;
+            color: white;
+            margin-top: 20px;
+        }
+
+        .hidden { display: none; }
     </style>
 </head>
 <body>
 
-    <img src="logo.png" alt="KIIS Logo" class="station-logo logo-left">
-    <img src="logo.png" alt="KIIS Logo" class="station-logo logo-right">
-
-    <h1>Robin, Kip & Corey</h1>
-    
-    <div id="grid-container" class="schedule-grid"></div>
-    
-    <div class="bottom-row">
-        <div class="wide-box">
-            <label>POST SHOW NOTES</label>
-            <textarea id="post_show" oninput="handleTextArea(this)"></textarea>
-        </div>
-        <div class="wide-box">
-            <label>FUTURE IDEAS</label>
-            <textarea id="ideas" oninput="handleTextArea(this)"></textarea>
+    <div id="header">
+        <div id="logo" onclick="toggleMenu(true)">
+            <span>☰</span> ShowRunner
         </div>
     </div>
 
+    <div id="whiteboard">
+        <div class="section">
+            <h3>Live Show Notes</h3>
+            <textarea id="liveNotes" class="text-box" style="width:100%"></textarea>
+        </div>
+        <div class="section">
+            <h3>Future Ideas (Persistent)</h3>
+            <textarea id="futureIdeas" class="text-box persistent-section" style="width:100%"></textarea>
+        </div>
+    </div>
+
+    <div id="menu-overlay">
+        <div id="main-menu" class="menu-card">
+            <h2>Menu</h2>
+            <button class="menu-btn" onclick="handleClear()">Clear</button>
+            <button class="menu-btn" onclick="handleSavePDF()">Save as PDF</button>
+            <button class="menu-btn" onclick="showSubMenu('save-load')">Save / Load</button>
+            <button class="menu-btn" onclick="showSubMenu('options')">Options</button>
+            <button class="menu-btn" onclick="showSubMenu('about')">About</button>
+            <p style="font-size: 0.8rem; color: #888;">Press ESC to return</p>
+        </div>
+
+        <div id="sub-menu" class="menu-card hidden">
+            <h2 id="sub-menu-title">Placeholder</h2>
+            <div style="padding: 20px; color: #666;">Settings and data management coming soon.</div>
+            <button class="menu-btn secondary" onclick="showMainMenu()">Back</button>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
     <script>
-        const firebaseConfig = {
-            apiKey: "PASTE_YOUR_API_KEY_HERE",
-            databaseURL: "https://radioplanner-d6a88-default-rtdb.asia-southeast1.firebasedatabase.app/"
-        };
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-        const colors = ['default', 'red', 'green', 'blue', 'yellow'];
-        const grid = document.getElementById('grid-container');
-        const startHour = 6;
+        const overlay = document.getElementById('menu-overlay');
+        const mainMenu = document.getElementById('main-menu');
+        const subMenu = document.getElementById('sub-menu');
+        const subMenuTitle = document.getElementById('sub-menu-title');
 
-        for (let h = 0; h < 4; h++) {
-            const hour = startHour + h;
-            const col = document.createElement('div');
-            col.className = 'hour-column';
-            col.innerHTML = `<div class="hour-header">${hour}:00</div>`;
-            for (let m = 0; m < 6; m++) {
-                const mins = (m * 10 === 0) ? '00' : (m * 10);
-                const slotId = `slot_${h}_${m}`;
-                const seg = document.createElement('div');
-                seg.className = 'segment';
-                seg.innerHTML = `<div id="time_${slotId}" class="time-label" onclick="cycleColor('${slotId}')">${hour}:${mins}</div><div id="${slotId}" class="editable-slot" contenteditable="true" oninput="handleInput(this)" onkeydown="handleEnter(event)"></div>`;
-                col.appendChild(seg);
-            }
-            grid.appendChild(col);
+        // --- Navigation Logic ---
+
+        function toggleMenu(show) {
+            overlay.style.display = show ? 'flex' : 'none';
+            if (show) showMainMenu();
         }
 
-        function handleEnter(e) { if (e.key === 'Enter') { e.preventDefault(); document.execCommand('insertLineBreak'); } }
-        function cycleColor(slotId) { db.ref('colors/' + slotId).once('value', (snapshot) => { let currentColor = snapshot.val() || 'default'; let nextIndex = (colors.indexOf(currentColor) + 1) % colors.length; db.ref('colors/' + slotId).set(colors[nextIndex]); }); }
-        
-        function scaleText(el) { 
-            el.style.fontSize = "1.4rem"; 
-            if(!el.innerText.trim()) return; 
-            let currentSize = 1.4; 
-            const minSize = 0.5; // Dropped min size slightly to handle more text
+        function showSubMenu(type) {
+            mainMenu.classList.add('hidden');
+            subMenu.classList.remove('hidden');
             
-            // Check scrollHeight against the actual height of the box
-            while (el.scrollHeight > el.clientHeight && currentSize > minSize) { 
-                currentSize -= 0.05; 
-                el.style.fontSize = currentSize + "rem"; 
-            } 
+            // Set title based on selection
+            const titles = {
+                'save-load': 'Save / Load',
+                'options': 'Options',
+                'about': 'About'
+            };
+            subMenuTitle.innerText = titles[type];
         }
 
-        function handleInput(el) { scaleText(el); db.ref('planner/' + el.id).set(el.innerHTML); }
-        function handleTextArea(el) { db.ref('planner/' + el.id).set(el.value); }
+        function showMainMenu() {
+            subMenu.classList.add('hidden');
+            mainMenu.classList.remove('hidden');
+        }
 
-        db.ref('planner').on('value', (snapshot) => { 
-            const data = snapshot.val(); 
-            if (data) { 
-                for (let key in data) { 
-                    const el = document.getElementById(key); 
-                    if (el && document.activeElement !== el) { 
-                        if (el.tagName === 'DIV') { 
-                            el.innerHTML = data[key]; 
-                            scaleText(el); 
-                        } else { 
-                            el.value = data[key]; 
-                        } 
-                    } 
-                } 
-            } 
+        // Close on Escape key
+        window.addEventListener('keydown', (e) => {
+            if (e.key === "Escape") toggleMenu(false);
         });
 
-        db.ref('colors').on('value', (snapshot) => { 
-            const colorData = snapshot.val(); 
-            document.querySelectorAll('.editable-slot').forEach(el => el.classList.remove('state-red', 'state-green', 'state-blue', 'state-yellow')); 
-            document.querySelectorAll('.time-label').forEach(el => el.classList.remove('label-red', 'label-green', 'label-blue', 'label-yellow')); 
-            if (colorData) { 
-                for (let slotId in colorData) { 
-                    const color = colorData[slotId]; 
-                    if (color !== 'default') { 
-                        document.getElementById(slotId)?.classList.add('state-' + color); 
-                        document.getElementById('time_' + slotId)?.classList.add('label-' + color); 
-                    } 
-                } 
-            } 
-        });
+        // --- Feature Logic ---
+
+        function handleClear() {
+            if (confirm("Clear current show notes? This won't affect Future Ideas.")) {
+                // Clear the whiteboard text boxes except persistent ones
+                document.getElementById('liveNotes').value = "";
+                // Reset colors if any custom styles were applied
+                document.getElementById('liveNotes').style.backgroundColor = "white";
+                toggleMenu(false);
+            }
+        }
+
+        async function handleSavePDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            const liveNotes = document.getElementById('liveNotes').value;
+            const futureIdeas = document.getElementById('futureIdeas').value;
+
+            doc.setFontSize(18);
+            doc.text("Show Log", 10, 20);
+            
+            doc.setFontSize(12);
+            doc.text("Live Notes:", 10, 40);
+            doc.text(liveNotes || "No notes recorded.", 10, 50);
+            
+            doc.text("Future Ideas Reference:", 10, 100);
+            doc.text(futureIdeas || "None.", 10, 110);
+
+            doc.save("show-whiteboard.pdf");
+            toggleMenu(false);
+        }
     </script>
 </body>
 </html>
