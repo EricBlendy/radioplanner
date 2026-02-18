@@ -8,9 +8,9 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
     <style>
         body { font-family: 'Segoe UI', sans-serif; background: #121212; color: #e0e0e0; padding: 20px; }
-        h1 { text-align: center; color: #00d4ff; text-transform: uppercase; letter-spacing: 2px; }
+        h1 { text-align: center; color: #00d4ff; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 30px; }
         
-        /* Grid Layout: 4 Columns */
+        /* 4 Column Layout */
         .schedule-grid { 
             display: grid; 
             grid-template-columns: repeat(4, 1fr); 
@@ -19,31 +19,54 @@
             margin: 0 auto; 
         }
 
-        .hour-column { background: #1e1e1e; border: 1px solid #333; border-radius: 8px; padding: 10px; }
-        .hour-header { text-align: center; font-size: 1.2rem; font-weight: bold; color: #00d4ff; margin-bottom: 10px; border-bottom: 1px solid #333; padding-bottom: 5px; }
+        .hour-column { background: #1e1e1e; border: 1px solid #333; border-radius: 8px; padding: 12px; }
+        .hour-header { text-align: center; font-size: 1.1rem; font-weight: bold; color: #00d4ff; margin-bottom: 12px; border-bottom: 1px solid #333; padding-bottom: 8px; }
 
-        .segment { margin-bottom: 8px; }
-        .time-label { font-size: 0.8rem; color: #888; margin-bottom: 3px; font-weight: bold; }
+        .segment { margin-bottom: 10px; }
+        .time-label { font-size: 0.75rem; color: #888; margin-bottom: 4px; font-weight: bold; }
         
-        input { 
+        input, textarea { 
             width: 100%; 
-            padding: 8px; 
+            padding: 10px; 
             box-sizing: border-box;
             border: none; 
             border-radius: 4px; 
             background: #2d2d2d; 
             color: white; 
             font-size: 0.9rem; 
-            transition: background 0.3s;
         }
-        input:focus { background: #444; outline: 2px solid #00d4ff; }
+        input:focus, textarea:focus { background: #444; outline: 2px solid #00d4ff; }
+
+        /* Bottom "Wide" Boxes */
+        .wide-box {
+            grid-column: span 2; /* Stretches across 2 columns */
+            background: #1e1e1e;
+            border: 1px solid #444;
+            border-radius: 8px;
+            padding: 15px;
+            margin-top: 10px;
+        }
+        .wide-box label { display: block; color: #ffab00; font-weight: bold; margin-bottom: 8px; text-transform: uppercase; font-size: 0.8rem; }
+        textarea { height: 80px; resize: none; font-family: inherit; }
     </style>
 </head>
 <body>
 
     <h1>Radio Show Planner</h1>
-    <div id="schedule" class="schedule-grid">
+    
+    <div class="schedule-grid">
+        <div id="schedule-content" style="display: contents;"></div>
+
+        <div class="wide-box">
+            <label>Post Show Notes</label>
+            <textarea id="post_show" placeholder="Review the show here..." oninput="saveToCloud('post_show', this.value)"></textarea>
         </div>
+
+        <div class="wide-box">
+            <label>Future Ideas</label>
+            <textarea id="ideas" placeholder="Brainstorm for tomorrow..." oninput="saveToCloud('ideas', this.value)"></textarea>
+        </div>
+    </div>
 
     <script>
         const firebaseConfig = {
@@ -52,53 +75,46 @@
 
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
-        const scheduleContainer = document.getElementById('schedule');
+        const scheduleContainer = document.getElementById('schedule-content');
 
+        // Build the 4-hour 10-min grid
         const startHour = 6;
-
-        // Loop through each of the 4 hours
         for (let h = 0; h < 4; h++) {
             const currentHourValue = startHour + h;
-            
-            // Create a Column for the Hour
             const col = document.createElement('div');
             col.className = 'hour-column';
-            col.innerHTML = `<div class="hour-header">${currentHourValue}:00</div>`;
+            col.innerHTML = `<div class="hour-header">${currentHourValue}:00 - ${currentHourValue + 1}:00</div>`;
 
-            // Create 6 segments (every 10 mins) inside this column
             for (let m = 0; m < 6; m++) {
                 const minutes = m * 10;
                 const displayMins = minutes === 0 ? '00' : minutes;
                 const timeLabel = `${currentHourValue}:${displayMins}`;
-                
-                // Unique ID for each slot (0-23)
-                const slotIndex = (h * 6) + m;
-                const slotId = `slot_${slotIndex}`;
+                const slotId = `slot_${(h * 6) + m}`;
 
                 const segmentDiv = document.createElement('div');
                 segmentDiv.className = 'segment';
                 segmentDiv.innerHTML = `
                     <div class="time-label">${timeLabel}</div>
-                    <input type="text" id="${slotId}" placeholder="..." 
-                           oninput="saveToCloud('${slotId}', this.value)">
+                    <input type="text" id="${slotId}" placeholder="..." oninput="saveToCloud('${slotId}', this.value)">
                 `;
                 col.appendChild(segmentDiv);
             }
-            
             scheduleContainer.appendChild(col);
         }
 
+        // Global Sync Function
         function saveToCloud(id, text) {
             db.ref('schedule/' + id).set(text);
         }
 
+        // Real-time listener
         db.ref('schedule').on('value', (snapshot) => {
             const data = snapshot.val();
             if (data) {
                 for (let id in data) {
-                    const input = document.getElementById(id);
-                    if (input && document.activeElement !== input) {
-                        input.value = data[id];
+                    const el = document.getElementById(id);
+                    if (el && document.activeElement !== el) {
+                        el.value = data[id];
                     }
                 }
             }
