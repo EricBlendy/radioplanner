@@ -46,20 +46,17 @@
             margin-bottom: 8px; flex-grow: 1; display: flex; flex-direction: column; height: 100%;
         }
 
-        /* Clickable Time Label */
         .time-label { 
             font-size: 0.85rem; color: #888; margin-bottom: 2px; font-weight: bold; 
             cursor: pointer; display: inline-block; width: fit-content;
-            transition: color 0.2s;
-            user-select: none;
+            transition: color 0.2s; user-select: none;
         }
         .time-label:hover { filter: brightness(1.5); }
 
-        /* FIXED SIZE BOX with Dynamic Backgrounds */
         .editable-slot {
             width: 100%;
             flex-grow: 1;
-            background: #222; /* Default */
+            background: #222;
             border: 1px solid #444;
             border-radius: 6px;
             color: white;
@@ -79,10 +76,10 @@
         }
 
         /* Color States */
-        .state-red { background: #661111 !important; color: white; }
-        .state-green { background: #114411 !important; color: white; }
-        .state-blue { background: #112266 !important; color: white; }
-        .state-yellow { background: #665511 !important; color: white; }
+        .state-red { background: #661111 !important; }
+        .state-green { background: #114411 !important; }
+        .state-blue { background: #112266 !important; }
+        .state-yellow { background: #665511 !important; }
 
         .label-red { color: #ff5555 !important; }
         .label-green { color: #55ff55 !important; }
@@ -122,11 +119,11 @@
     <div class="bottom-row">
         <div class="wide-box">
             <label>POST SHOW NOTES</label>
-            <textarea id="post_show"></textarea>
+            <textarea id="post_show" oninput="handleTextArea(this)"></textarea>
         </div>
         <div class="wide-box">
             <label>FUTURE IDEAS</label>
-            <textarea id="ideas"></textarea>
+            <textarea id="ideas" oninput="handleTextArea(this)"></textarea>
         </div>
     </div>
 
@@ -163,18 +160,14 @@
             grid.appendChild(col);
         }
 
-        // CYCLE COLOR LOGIC
         function cycleColor(slotId) {
             db.ref('colors/' + slotId).once('value', (snapshot) => {
                 let currentColor = snapshot.val() || 'default';
                 let nextIndex = (colors.indexOf(currentColor) + 1) % colors.length;
-                let nextColor = colors[nextIndex];
-                
-                db.ref('colors/' + slotId).set(nextColor);
+                db.ref('colors/' + slotId).set(colors[nextIndex]);
             });
         }
 
-        // SCALE TEXT
         function scaleText(el) {
             el.style.fontSize = "1.4rem";
             let currentSize = 1.4;
@@ -187,10 +180,14 @@
 
         function handleInput(el) {
             scaleText(el);
-            db.ref('planner/' + el.id).set(el.innerText);
+            // Using innerHTML fixes the Enter/New Line visual bug
+            db.ref('planner/' + el.id).set(el.innerHTML);
         }
 
-        // LISTEN FOR TEXT CHANGES
+        function handleTextArea(el) {
+            db.ref('planner/' + el.id).set(el.value);
+        }
+
         db.ref('planner').on('value', (snapshot) => {
             const data = snapshot.val();
             if (data) {
@@ -198,7 +195,7 @@
                     const el = document.getElementById(key);
                     if (el && document.activeElement !== el) {
                         if (el.tagName === 'DIV') {
-                            el.innerText = data[key];
+                            el.innerHTML = data[key];
                             scaleText(el);
                         } else {
                             el.value = data[key];
@@ -208,34 +205,21 @@
             }
         });
 
-        // LISTEN FOR COLOR CHANGES
         db.ref('colors').on('value', (snapshot) => {
             const colorData = snapshot.val();
-            // Reset all first
-            document.querySelectorAll('.editable-slot').forEach(el => {
-                el.classList.remove('state-red', 'state-green', 'state-blue', 'state-yellow');
-            });
-            document.querySelectorAll('.time-label').forEach(el => {
-                el.classList.remove('label-red', 'label-green', 'label-blue', 'label-yellow');
-            });
+            document.querySelectorAll('.editable-slot').forEach(el => el.classList.remove('state-red', 'state-green', 'state-blue', 'state-yellow'));
+            document.querySelectorAll('.time-label').forEach(el => el.classList.remove('label-red', 'label-green', 'label-blue', 'label-yellow'));
 
             if (colorData) {
                 for (let slotId in colorData) {
                     const color = colorData[slotId];
-                    const slotEl = document.getElementById(slotId);
-                    const timeEl = document.getElementById('time_' + slotId);
-                    
                     if (color !== 'default') {
-                        if (slotEl) slotEl.classList.add('state-' + color);
-                        if (timeEl) timeEl.classList.add('label-' + color);
+                        document.getElementById(slotId)?.classList.add('state-' + color);
+                        document.getElementById('time_' + slotId)?.classList.add('label-' + color);
                     }
                 }
             }
         });
-
-        // Bottom boxes sync
-        document.getElementById('post_show').oninput = (e) => db.ref('planner/post_show').set(e.target.value);
-        document.getElementById('ideas').oninput = (e) => db.ref('planner/ideas').set(e.target.value);
     </script>
 </body>
 </html>
