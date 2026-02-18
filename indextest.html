@@ -100,6 +100,7 @@
 
         .editable-slot:empty:before { content: "\feff"; display: inline-block; width: 0; pointer-events: none; }
 
+        /* Color Coding Styles */
         .state-red { background: #661111 !important; }
         .state-green { background: #114411 !important; }
         .state-blue { background: #112266 !important; }
@@ -188,6 +189,7 @@
         const grid = document.getElementById('grid-container');
         const startHour = 6;
 
+        // Generate Grid
         for (let h = 0; h < 4; h++) {
             const hour = startHour + h;
             const col = document.createElement('div');
@@ -255,7 +257,7 @@
         });
 
         function clearWhiteboard() {
-            if(confirm("Are you sure? This clears the main whiteboard slots and colors. Post-show and Future Ideas will remain.")) {
+            if(confirm("Clear main whiteboard and colors? (Post-show and Future Ideas will remain safe)")) {
                 for (let h = 0; h < 4; h++) {
                     for (let m = 0; m < 6; m++) {
                         const id = `slot_${h}_${m}`;
@@ -270,30 +272,59 @@
         function saveAsPDF() {
             const { jsPDF } = window.jspdf;
             const doc = new jsPDF();
+            const pageWidth = doc.internal.pageSize.getWidth();
+            const margin = 15;
+            const maxLineWidth = pageWidth - margin * 2;
+            
             doc.setFont("helvetica", "bold");
-            doc.text("KIIS 973 - ROBIN, KIP & COREY SHOW LOG", 10, 20);
+            doc.setFontSize(20);
+            doc.setTextColor(234, 39, 118);
+            doc.text("KIIS 973 - SHOW LOG", margin, 20);
+            
             doc.setFontSize(10);
-            doc.text("Generated: " + new Date().toLocaleString(), 10, 28);
+            doc.setTextColor(100, 100, 100);
+            doc.text("Generated: " + new Date().toLocaleString(), margin, 28);
             
             let y = 40;
+
             document.querySelectorAll('.hour-column').forEach(col => {
                 const header = col.querySelector('.hour-header').innerText;
+                if (y > 260) { doc.addPage(); y = 20; }
+
                 doc.setFontSize(14);
+                doc.setFont("helvetica", "bold");
                 doc.setTextColor(234, 39, 118);
-                doc.text(header, 10, y);
-                y += 7;
+                doc.text(header, margin, y);
+                y += 8;
+                
                 col.querySelectorAll('.segment').forEach(seg => {
                     const time = seg.querySelector('.time-label').innerText;
-                    const content = seg.querySelector('.editable-slot').innerText;
+                    const content = seg.querySelector('.editable-slot').innerText.trim();
+                    
                     doc.setFontSize(10);
+                    doc.setFont("helvetica", "bold");
                     doc.setTextColor(0, 0, 0);
-                    doc.text(`${time}: ${content}`, 15, y);
-                    y += 6;
+                    doc.text(`${time}:`, margin, y);
+                    
+                    if (content !== "") {
+                        doc.setFont("helvetica", "normal");
+                        const splitContent = doc.splitTextToSize(content, maxLineWidth - 20);
+                        const estimatedHeight = splitContent.length * 5;
+                        if (y + estimatedHeight > 280) { doc.addPage(); y = 20; doc.text(`${time}: (cont)`, margin, y); y += 5; }
+
+                        doc.text(splitContent, margin + 15, y);
+                        y += (splitContent.length * 5) + 3; 
+                    } else {
+                        doc.setFont("helvetica", "normal");
+                        doc.setTextColor(180, 180, 180);
+                        doc.text("--", margin + 15, y);
+                        y += 6;
+                    }
                 });
-                y += 5;
-                if(y > 270) { doc.addPage(); y = 20; }
+                y += 10;
             });
-            doc.save(`KIIS_ShowLog_${new Date().toLocaleDateString()}.pdf`);
+
+            doc.save(`KIIS_ShowLog_${new Date().toLocaleDateString().replace(/\//g, '-')}.pdf`);
             toggleMenu(false);
         }
 
