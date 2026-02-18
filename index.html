@@ -112,7 +112,13 @@
             flex-direction: column; 
         }
 
-        .wide-box label { color:#ffab00; font-weight:bold; margin-bottom: 8px; font-size: 1rem; }
+        .wide-box label { 
+            color: #ea2776; /* Updated to KIIS PINK */
+            font-weight: bold; 
+            margin-bottom: 8px; 
+            font-size: 1rem; 
+            text-transform: uppercase;
+        }
 
         textarea { 
             width: 100%; 
@@ -130,6 +136,7 @@
         textarea:focus {
             outline: none;
             border-color: #ea2776;
+            box-shadow: 0 0 8px rgba(234, 39, 118, 0.4);
         }
     </style>
 </head>
@@ -151,11 +158,13 @@
     </div>
 
     <script>
+        // REPLACE THIS WITH YOUR ACTUAL API KEY FROM FIREBASE
         const firebaseConfig = {
             apiKey: "PASTE_YOUR_API_KEY_HERE",
             databaseURL: "https://radioplanner-d6a88-default-rtdb.asia-southeast1.firebasedatabase.app/"
         };
 
+        // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
@@ -182,10 +191,12 @@
             grid.appendChild(col);
         }
 
+        // WRITE to Cloud
         function updateDB(id, val) {
             db.ref('planner/' + id).set(val);
         }
 
+        // READ from Cloud (Live Sync)
         db.ref('planner').on('value', (snapshot) => {
             const data = snapshot.val();
             if (data) {
