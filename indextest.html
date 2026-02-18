@@ -3,230 +3,272 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Show Runner Whiteboard</title>
+    <title>Radio Show Planner - Pro</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <style>
         :root {
-            --bg-color: #f4f4f9;
-            --panel-color: #ffffff;
-            --accent-color: #4a90e2;
-            --text-color: #333;
-            --border-radius: 8px;
-            --shadow: 0 4px 15px rgba(0,0,0,0.1);
+            --bg-color: #1a1a1b;
+            --card-bg: #272729;
+            --accent-blue: #007bff;
+            --border-color: #3e3e42;
+            --text-main: #e0e0e0;
+            --menu-overlay: rgba(20, 20, 20, 0.96);
         }
 
         body {
-            margin: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: var(--bg-color);
-            color: var(--text-color);
+            color: var(--text-main);
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
             overflow: hidden;
         }
 
-        /* --- Header & Logo --- */
-        #header {
-            display: flex;
-            align-items: center;
+        /* --- HEADER & LOGO --- */
+        header {
+            background-color: #000;
             padding: 10px 20px;
-            background: var(--panel-color);
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-        }
-
-        #logo {
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 1.5rem;
-            color: var(--accent-color);
             display: flex;
+            justify-content: space-between;
             align-items: center;
-            gap: 10px;
-            transition: transform 0.2s;
+            border-bottom: 1px solid var(--border-color);
         }
 
-        #logo:hover { transform: scale(1.05); }
+        .logo {
+            font-weight: 800;
+            font-size: 1.2rem;
+            color: var(--accent-blue);
+            cursor: pointer;
+            user-select: none;
+            transition: opacity 0.2s;
+        }
 
-        /* --- Whiteboard Area --- */
-        #whiteboard {
-            height: calc(100vh - 60px);
-            padding: 20px;
+        .logo:hover { opacity: 0.8; }
+
+        .clock { font-family: monospace; font-size: 1.4rem; color: #ff9d00; }
+
+        /* --- MAIN LAYOUT --- */
+        .container {
             display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-        }
-
-        .text-box {
-            background: white;
-            border: 2px solid #ddd;
-            border-radius: var(--border-radius);
+            grid-template-columns: 2fr 1fr;
+            grid-template-rows: 1fr 1fr;
+            gap: 15px;
             padding: 15px;
-            min-height: 200px;
+            flex-grow: 1;
         }
 
-        .persistent-section {
-            background: #eef2f7;
-            border: 2px dashed #cbd5e0;
+        .panel {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
         }
 
-        /* --- Overlay Menu System --- */
+        .panel-header {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            color: #888;
+            margin-bottom: 8px;
+            letter-spacing: 1px;
+            border-bottom: 1px solid #333;
+            padding-bottom: 4px;
+        }
+
+        textarea {
+            flex-grow: 1;
+            background: transparent;
+            border: none;
+            color: var(--text-main);
+            resize: none;
+            outline: none;
+            font-size: 1rem;
+            line-height: 1.5;
+        }
+
+        /* --- MENU OVERLAY --- */
         #menu-overlay {
-            display: none; /* Hidden by default */
+            display: none;
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(244, 244, 249, 0.95);
-            backdrop-filter: blur(5px);
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--menu-overlay);
             z-index: 1000;
             justify-content: center;
             align-items: center;
+            backdrop-filter: blur(8px);
         }
 
-        .menu-card {
-            background: var(--panel-color);
-            padding: 40px;
-            border-radius: var(--border-radius);
-            box-shadow: var(--shadow);
-            width: 300px;
-            text-align: center;
+        .menu-content {
+            width: 320px;
+            background: #2d2d30;
+            border: 1px solid var(--accent-blue);
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.5);
         }
-
-        .menu-card h2 { margin-top: 0; color: var(--accent-color); }
 
         .menu-btn {
-            display: block;
             width: 100%;
             padding: 12px;
-            margin: 10px 0;
-            border: 1px solid #ddd;
-            background: white;
-            border-radius: 5px;
+            margin: 8px 0;
+            background: #3e3e42;
+            color: white;
+            border: 1px solid transparent;
+            border-radius: 6px;
             cursor: pointer;
+            text-align: left;
             font-size: 1rem;
             transition: all 0.2s;
         }
 
         .menu-btn:hover {
-            background: var(--accent-color);
-            color: white;
-            border-color: var(--accent-color);
+            background: var(--accent-blue);
+            transform: translateX(5px);
         }
 
-        .menu-btn.secondary {
-            background: #6c757d;
-            color: white;
+        .menu-btn.back-btn {
+            background: transparent;
+            border: 1px dashed #666;
             margin-top: 20px;
+            text-align: center;
         }
 
         .hidden { display: none; }
+
+        /* Custom Segment Colors */
+        .live-segment { border-left: 4px solid #4caf50; }
+        .future-segment { border-left: 4px solid #9c27b0; }
+        .notes-segment { border-left: 4px solid #2196f3; }
+
     </style>
 </head>
 <body>
 
-    <div id="header">
-        <div id="logo" onclick="toggleMenu(true)">
-            <span>☰</span> ShowRunner
-        </div>
+<header>
+    <div class="logo" onclick="toggleMenu(true)">[ STUDIO_PLANNER ]</div>
+    <div class="clock" id="digitalClock">00:00:00</div>
+</header>
+
+<div class="container">
+    <div class="panel live-segment" id="whiteboard-main">
+        <div class="panel-header">Live Show Whiteboard</div>
+        <textarea id="mainWhiteboard" placeholder="Type show segments here..."></textarea>
     </div>
 
-    <div id="whiteboard">
-        <div class="section">
-            <h3>Live Show Notes</h3>
-            <textarea id="liveNotes" class="text-box" style="width:100%"></textarea>
-        </div>
-        <div class="section">
-            <h3>Future Ideas (Persistent)</h3>
-            <textarea id="futureIdeas" class="text-box persistent-section" style="width:100%"></textarea>
-        </div>
+    <div class="panel future-segment">
+        <div class="panel-header">Future Ideas</div>
+        <textarea id="futureIdeas" placeholder="Topic backlog..."></textarea>
     </div>
 
-    <div id="menu-overlay">
-        <div id="main-menu" class="menu-card">
-            <h2>Menu</h2>
-            <button class="menu-btn" onclick="handleClear()">Clear</button>
-            <button class="menu-btn" onclick="handleSavePDF()">Save as PDF</button>
-            <button class="menu-btn" onclick="showSubMenu('save-load')">Save / Load</button>
-            <button class="menu-btn" onclick="showSubMenu('options')">Options</button>
-            <button class="menu-btn" onclick="showSubMenu('about')">About</button>
-            <p style="font-size: 0.8rem; color: #888;">Press ESC to return</p>
-        </div>
-
-        <div id="sub-menu" class="menu-card hidden">
-            <h2 id="sub-menu-title">Placeholder</h2>
-            <div style="padding: 20px; color: #666;">Settings and data management coming soon.</div>
-            <button class="menu-btn secondary" onclick="showMainMenu()">Back</button>
-        </div>
+    <div class="panel live-segment">
+        <div class="panel-header">Current Show Notes</div>
+        <textarea id="showNotes" placeholder="Real-time updates..."></textarea>
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <div class="panel notes-segment">
+        <div class="panel-header">Post-Show Notes</div>
+        <textarea id="postShow" placeholder="Debrief items..."></textarea>
+    </div>
+</div>
 
-    <script>
-        const overlay = document.getElementById('menu-overlay');
-        const mainMenu = document.getElementById('main-menu');
-        const subMenu = document.getElementById('sub-menu');
-        const subMenuTitle = document.getElementById('sub-menu-title');
+<div id="menu-overlay">
+    <div id="main-menu" class="menu-content">
+        <h3 style="margin-top:0; color:var(--accent-blue)">Main Menu</h3>
+        <button class="menu-btn" onclick="clearWhiteboard()">Clear Whiteboard</button>
+        <button class="menu-btn" onclick="exportPDF()">Save as PDF</button>
+        <button class="menu-btn" onclick="openSubMenu('Save / Load')">Save / Load</button>
+        <button class="menu-btn" onclick="openSubMenu('Options')">Options</button>
+        <button class="menu-btn" onclick="openSubMenu('About')">About</button>
+        <div style="font-size: 0.7rem; color: #666; margin-top: 15px;">ESC to return to show</div>
+    </div>
 
-        // --- Navigation Logic ---
+    <div id="sub-menu" class="menu-content hidden">
+        <h3 id="sub-title" style="margin-top:0; color:var(--accent-blue)">Placeholder</h3>
+        <p style="color: #bbb; font-size: 0.9rem;">This module is under development.</p>
+        <button class="menu-btn back-btn" onclick="closeSubMenu()">← Back</button>
+    </div>
+</div>
 
-        function toggleMenu(show) {
-            overlay.style.display = show ? 'flex' : 'none';
-            if (show) showMainMenu();
-        }
+<script>
+    // --- CLOCK LOGIC ---
+    function updateClock() {
+        const now = new Date();
+        document.getElementById('digitalClock').innerText = now.toTimeString().split(' ')[0];
+    }
+    setInterval(updateClock, 1000);
+    updateClock();
 
-        function showSubMenu(type) {
-            mainMenu.classList.add('hidden');
-            subMenu.classList.remove('hidden');
+    // --- MENU NAVIGATION ---
+    const overlay = document.getElementById('menu-overlay');
+    const mainMenu = document.getElementById('main-menu');
+    const subMenu = document.getElementById('sub-menu');
+    const subTitle = document.getElementById('sub-title');
+
+    function toggleMenu(show) {
+        overlay.style.display = show ? 'flex' : 'none';
+        if(show) closeSubMenu(); // Reset to main layer when opening
+    }
+
+    function openSubMenu(title) {
+        mainMenu.classList.add('hidden');
+        subMenu.classList.remove('hidden');
+        subTitle.innerText = title;
+    }
+
+    function closeSubMenu() {
+        subMenu.classList.add('hidden');
+        mainMenu.classList.remove('hidden');
+    }
+
+    // Escape Key to Exit
+    window.addEventListener('keydown', (e) => {
+        if (e.key === "Escape") toggleMenu(false);
+    });
+
+    // --- BUTTON FUNCTIONS ---
+
+    function clearWhiteboard() {
+        if(confirm("Clear current whiteboard and show notes? (Future Ideas and Post-Show won't be touched)")) {
+            // Clear contents
+            document.getElementById('mainWhiteboard').value = "";
+            document.getElementById('showNotes').value = "";
             
-            // Set title based on selection
-            const titles = {
-                'save-load': 'Save / Load',
-                'options': 'Options',
-                'about': 'About'
-            };
-            subMenuTitle.innerText = titles[type];
-        }
-
-        function showMainMenu() {
-            subMenu.classList.add('hidden');
-            mainMenu.classList.remove('hidden');
-        }
-
-        // Close on Escape key
-        window.addEventListener('keydown', (e) => {
-            if (e.key === "Escape") toggleMenu(false);
-        });
-
-        // --- Feature Logic ---
-
-        function handleClear() {
-            if (confirm("Clear current show notes? This won't affect Future Ideas.")) {
-                // Clear the whiteboard text boxes except persistent ones
-                document.getElementById('liveNotes').value = "";
-                // Reset colors if any custom styles were applied
-                document.getElementById('liveNotes').style.backgroundColor = "white";
-                toggleMenu(false);
-            }
-        }
-
-        async function handleSavePDF() {
-            const { jsPDF } = window.jspdf;
-            const doc = new jsPDF();
+            // Clear styles (if you had any specific text highlights)
+            document.getElementById('mainWhiteboard').style.color = "var(--text-main)";
+            document.getElementById('showNotes').style.color = "var(--text-main)";
             
-            const liveNotes = document.getElementById('liveNotes').value;
-            const futureIdeas = document.getElementById('futureIdeas').value;
-
-            doc.setFontSize(18);
-            doc.text("Show Log", 10, 20);
-            
-            doc.setFontSize(12);
-            doc.text("Live Notes:", 10, 40);
-            doc.text(liveNotes || "No notes recorded.", 10, 50);
-            
-            doc.text("Future Ideas Reference:", 10, 100);
-            doc.text(futureIdeas || "None.", 10, 110);
-
-            doc.save("show-whiteboard.pdf");
             toggleMenu(false);
         }
-    </script>
+    }
+
+    function exportPDF() {
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF();
+        
+        const main = document.getElementById('mainWhiteboard').value;
+        const notes = document.getElementById('showNotes').value;
+        const dateStr = new Date().toLocaleDateString();
+
+        doc.setFontSize(20);
+        doc.text("Radio Show Log - " + dateStr, 10, 20);
+        
+        doc.setFontSize(14);
+        doc.text("Whiteboard Content:", 10, 40);
+        doc.setFontSize(11);
+        doc.text(main || "Empty", 10, 50);
+
+        doc.setFontSize(14);
+        doc.text("Show Notes:", 10, 120);
+        doc.setFontSize(11);
+        doc.text(notes || "Empty", 10, 130);
+
+        doc.save(`ShowLog_${dateStr.replace(/\//g, '-')}.pdf`);
+        toggleMenu(false);
+    }
+</script>
+
 </body>
 </html>
