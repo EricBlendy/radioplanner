@@ -213,10 +213,23 @@
     </div>
 
     <script>
+
+        // Import the functions you need from the SDKs you need
+import { initializeApp } from "firebase/app";
+// TODO: Add SDKs for Firebase products that you want to use
+// https://firebase.google.com/docs/web/setup#available-libraries
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
         const firebaseConfig = {
-            apiKey: "AIzaSyBjLLpUEB0k3XqHs9Br9l5mIwRqHueAkUY",
-            databaseURL: "https://radioplanner-d6a88-default-rtdb.asia-southeast1.firebasedatabase.app/"
-        };
+  apiKey: "AIzaSyBjLLpUEB0k3XqHs9Br9l5mIwRqHueAkUY",
+  authDomain: "whiteboard-kiis973-breakfast.firebaseapp.com",
+  databaseURL: "https://whiteboard-kiis973-breakfast-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "whiteboard-kiis973-breakfast",
+  storageBucket: "whiteboard-kiis973-breakfast.firebasestorage.app",
+  messagingSenderId: "282962157032",
+  appId: "1:282962157032:web:95cf5e6c8706a16d76185d"
+};
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
         const colors = ['default', 'red', 'green', 'blue', 'yellow'];
