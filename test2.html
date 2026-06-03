@@ -213,23 +213,29 @@
     </div>
 
     <script>
-
-        // Import the functions you need from the SDKs you need
+// Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
+import { getAnalytics } from "firebase/analytics";
 // TODO: Add SDKs for Firebase products that you want to use
 // https://firebase.google.com/docs/web/setup#available-libraries
 
+// Your web app's Firebase configuration
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyBvuEjgynIf3ViSN35k2DKPK5gNJ3wMSHM",
+  authDomain: "radioplanner-d6a88.firebaseapp.com",
+  databaseURL: "https://radioplanner-d6a88-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "radioplanner-d6a88",
+  storageBucket: "radioplanner-d6a88.firebasestorage.app",
+  messagingSenderId: "588922635152",
+  appId: "1:588922635152:web:25bd0410087f35a91f6915",
+  measurementId: "G-SM9WVVQ2L1"
+};
+
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
-        const firebaseConfig = {
-  apiKey: "AIzaSyBjLLpUEB0k3XqHs9Br9l5mIwRqHueAkUY",
-};
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.database();
-        const colors = ['default', 'red', 'green', 'blue', 'yellow'];
-        const grid = document.getElementById('grid-container');
-        const startHour = 6;
-
+const analytics = getAnalytics(app);
+        
         // --- GRID GENERATION ---
         for (let h = 0; h < 4; h++) {
             const hour = startHour + h;
